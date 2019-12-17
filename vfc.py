@@ -5,7 +5,29 @@ from scipy.signal import fftconvolve
 
 ################################################################################
 
-def convolution(x, y, tri, u, v, X, Y, V, M, fsp = 1, nbin = 8):
+def convolution_simple(U0, X, Y, V, M, beta = .5, fsp = 1):
+
+  # vegetation and mask grid size
+  DX = X[1] - X[0]
+
+  # vegetation surface over convolution mask
+  SV = fftconvolve(V, np.ones(M.shape), mode = 'same') * (DX ** 2)
+  SV[SV < 1] = 1
+
+  # convolution product
+  CONV = np.exp(fftconvolve(V / (SV ** beta), np.log(M), mode = 'same'))
+
+  # species rescaling
+  CONV = 1 + (CONV - 1) * fsp
+
+  # convolution product to velocity
+  return U0 * CONV
+
+
+
+################################################################################
+
+def convolution(x, y, tri, u, v, X, Y, V, M, beta = .5, fsp = 1, nbin = 8):
 
   # vegetation and mask grid size
   DX = X[1] - X[0]
@@ -23,15 +45,8 @@ def convolution(x, y, tri, u, v, X, Y, V, M, fsp = 1, nbin = 8):
     # rotate mask
     M_i = rotate(M, theta0[i], mode = 'constant', cval = 1)
 
-    # patch surface scaling factor
-    FPS = fftconvolve(V, np.ones(M_i.shape), mode = 'same') * (DX ** 2)
-    FPS[FPS < 1] = 1
-
-    # convolution product
-    TMP.append(np.exp(fftconvolve(V / (FPS ** .5), np.log(M_i), mode = 'same')))
-
-    # species rescaling
-    TMP[i] = 1. + (TMP[i] - 1.) * fsp
+    # convolution simple
+    TMP.append(convolution_simple(1, X, Y, V, M_i, beta = beta, fsp = fsp))
 
   # original flow direction and corresponding bin
   theta = np.degrees(np.arctan2(v, u))
@@ -53,60 +68,8 @@ def convolution(x, y, tri, u, v, X, Y, V, M, fsp = 1, nbin = 8):
     CONV[VOR == i] /= np.mean(CONV[VOR == i])
 
   # convolution product to velocity
-  uv = (u ** 2 + v ** 2) ** .5
-  UV = uv[VOR] * CONV
-  return UV
-
-
-################################################################################
-
-def mask_diffusion_1d(mask0, s, axis = 1):
-
-  """
-  mask: numpy array of shape (nx, ny)
-  s: diffusion number (s = nu * dt / dx ** 2)
-     nu: diffusion coefficient [m^2/s]
-     dt: time step [s]
-     dx: grid size [m]
-  axis: axis along which the 1d diffusion is applied
-
-  return:
-    mask: numpy array of shape (nx, ny)
-  """
-
-  # rotate mask
-  if axis == 0:
-    mask0 = mask0.T
-
-  # number of iterations
-  smax = .5
-  if s < smax:
-    n = 1
-  else:
-    n = np.int(np.floor(s / smax)) + 1
-
-  # iteration diffusion number
-  ss = s / n
-
-  # initialize
-  mask = np.zeros(mask0.shape)
-
-  # for each iteration
-  for i in range(n):
-
-    # no-flux boundary condition
-    mask[:,  0] = 4 / 3 * mask0[:,  1] - 1 / 3 * mask0[:,  2]
-    mask[:, -1] = 4 / 3 * mask0[:, -2] - 1 / 3 * mask0[:, -3]
-
-    # inside domain
-    mask[:, 1:-1] = mask0[:, 1:-1] + \
-                    ss * (mask0[:, :-2] - 2 * mask0[:, 1:-1] + mask0[:, 2:])
-
-  # rotate mask
-  if axis == 0:
-    mask = mask.T
-
-  return mask
+  uv = ((u ** 2 + v ** 2) ** .5)
+  return uv[VOR] * CONV
 
 
 ################################################################################
