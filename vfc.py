@@ -7,7 +7,11 @@ Note: Practical approach (spatial refinement) currently only available for unstr
 Reference:
   Gourgue, O., van Belzen, J., Schwarz, C., Bouma, T.J., van de Koppel, J. & Temmerman, S. (2020) A convolution method to assess subgrid-scale interactions between flow and patchy vegetation in biogeomorphic models, Journal of Advances in Modeling Earth Systems, submitted.
 
+Author: Olivier Gourgue
+       (University of Antwerp, Belgium & Boston University, MA, USA)
+
 """
+
 
 import numpy as np
 from scipy.ndimage import rotate
@@ -99,12 +103,12 @@ def convolution_step_1(X, Y, V, M, beta = .5, N = 8):
 
 def convolution_step_2(x, y, tri, u, v, X, Y, V, M, beta = .5, N = 8):
 
-  """ Calculate the normalized aggregated velocity matrix (Gourgue et al., 2020, Equation 12)
+  """ Calculate the normalized aggregated velocity matrix (Gourgue et al., 2020, Equation 13)
 
   Required parameters:
-  x, y (NumPy arrays of size (npoin)): coordinates of the triangular grid
-  tri (NumPy array of size (npoin, 3)): connectivity table of the triangular grid
-  u, v (NumPy arrays of size (npoin)): coarse-resolution flow velocities on the triangular grid
+  x, y (NumPy arrays of size (npoin)): Coordinates of the triangular grid
+  tri (NumPy array of size (npoin, 3)): Connectivity table of the triangular grid
+  u, v (NumPy arrays of size (npoin)): Velocity components on the coarse-resolution triangular grid
   X, Y (NumPy array of size (m) and (n)): coordinates of the rectangular grid
   V (NumPy array of size (m,n)): Vegetation distribution (equal 1 on vegetated cells, 0 otherwise)
   M (NumPy array of size (k,l)): Convolution mask, that is, magnitude of the normalized flow velocity around an elementary vegetation patch of the size of one rectangular grid cell (Gourgue et al., 2020)
@@ -138,7 +142,7 @@ def convolution_step_2(x, y, tri, u, v, X, Y, V, M, beta = .5, N = 8):
   # voronoi neighborhood
   VOR = voronoi(x, y, tri, X, Y)
 
-  # select appropriate convolution bin for each voronoi cell
+  # select appropriate convolution bin for each voronoi cluster
   CONV = np.zeros(V.shape)
   for i in range(N):
     CONV[bin[VOR] == i] = CONV1[i, :, :][bin[VOR] == i]
@@ -149,168 +153,239 @@ def convolution_step_2(x, y, tri, u, v, X, Y, V, M, beta = .5, N = 8):
 
 
 ################################################################################
+# practical implementation - step 3: conservation of momentum ##################
+################################################################################
 
-def convolution_step_3(x, y, tri, u, v, X, Y, V, M, beta = .5, nbin = 8):
+def convolution_step_3(x, y, tri, u, v, X, Y, V, M, beta = .5, N = 8):
 
-  # convolution step 3
-  CONV, VOR = convolution_step_2(x, y, tri, u, v, X, Y, V, M, beta = beta, \
-                                 nbin = nbin)
+  """ Calculate the normalized conservative velocity matrix (Gourgue et al., 2020, Equation 14)
 
-  # conservative rescaling inside each voronoi cell
+  Required parameters:
+  x, y (NumPy arrays of size (npoin)): Coordinates of the triangular grid
+  tri (NumPy array of size (npoin, 3)): Connectivity table of the triangular grid
+  u, v (NumPy arrays of size (npoin)): Velocity components on the coarse-resolution triangular grid
+  X, Y (NumPy array of size (m) and (n)): coordinates of the rectangular grid
+  V (NumPy array of size (m,n)): Vegetation distribution (equal 1 on vegetated cells, 0 otherwise)
+  M (NumPy array of size (k,l)): Convolution mask, that is, magnitude of the normalized flow velocity around an elementary vegetation patch of the size of one rectangular grid cell (Gourgue et al., 2020)
+
+  Optional parameters:
+  beta (float, default = 0.5): Convolution parameter ranging from 0 to 1 (high values accentuate the impact of the convolution mask) (Gourgue et al., 2020, Equation 11)
+  N (int, default = 8): Number of convolution directions
+
+  Returns:
+  Numpy array of size (m,n): Normalized conservative velocity matrix
+  NumPy array of size (m,n): Voronoi matrix
+
+  """
+
+  # convolution step 2
+  CONV, VOR = \
+             convolution_step_2(x, y, tri, u, v, X, Y, V, M, beta = beta, N = N)
+
+  # conservative rescaling inside each voronoi cluster
   for i in range(len(x)):
     CONV[VOR == i] /= np.mean(CONV[VOR == i])
 
+  # return normalized conservative velocity and voronoi matrices
   return CONV, VOR
 
 
+
+################################################################################
+# practical implementation - step 4: spatial refinement ########################
 ################################################################################
 
-def convolution(x, y, tri, u, v, X, Y, V, M, beta = .5, nbin = 8):
+def convolution(x, y, tri, u, v, X, Y, V, M, beta = .5, N = 8):
+
+  """ Calculate the spatially-refined velocity matrix (Gourgue et al., 2020, Equation 15)
+
+  Required parameters:
+  x, y (NumPy arrays of size (npoin)): Coordinates of the triangular grid
+  tri (NumPy array of size (npoin, 3)): Connectivity table of the triangular grid
+  u, v (NumPy arrays of size (npoin)): Velocity components on the coarse-resolution triangular grid
+  X, Y (NumPy array of size (m) and (n)): Coordinates of the rectangular grid
+  V (NumPy array of size (m,n)): Vegetation distribution (equal 1 on vegetated cells, 0 otherwise)
+  M (NumPy array of size (k,l)): Convolution mask, that is, magnitude of the normalized flow velocity around an elementary vegetation patch of the size of one rectangular grid cell (Gourgue et al., 2020)
+
+  Optional parameters:
+  beta (float, default = 0.5): Convolution parameter ranging from 0 to 1 (high values accentuate the impact of the convolution mask) (Gourgue et al., 2020, Equation 11)
+  N (int, default = 8): Number of convolution directions
+
+  Returns:
+  Numpy array of size (m,n): Spatially-refined velocity matrix
+  NumPy array of size (m,n): Voronoi matrix
+
+  """
 
   # convolution step 3
-  CONV, VOR = convolution_step_3(x, y, tri, u, v, X, Y, V, M, beta = beta, \
-                                 nbin = nbin)
+  CONV, VOR = \
+             convolution_step_3(x, y, tri, u, v, X, Y, V, M, beta = beta, N = N)
 
-  # convolution product to velocity
+  # velocity from coarse-resolution model
   uv = ((u ** 2 + v ** 2) ** .5)
+
+  # return spatially refine velocity matrix
   return uv[VOR] * CONV
 
 
+
+################################################################################
+# export convolution mask ######################################################
 ################################################################################
 
-def mask_export(filename, mask, dx):
+def mask_export(filename, M, DX):
 
-  """
-  filename: file name in which mask will be exported
-  mask: numpy array of shape (nx, ny)
-  dx: mask grid size
+  """ Export convolution mask (Gourgue et al., 2020)
+
+  Required parameters:
+  filename (str)
+  M (NumPy array of size (k,l)): Convolution mask, that is, magnitude of the normalized flow velocity around an elementary vegetation patch of the size of one rectangular grid cell (Gourgue et al., 2020)
+  DX (float): grid size of the convolution mask
+
   """
 
   # open file
   file = open(filename, 'w')
 
   # write header
-  np.array(mask.shape[0], dtype = int).tofile(file)
-  np.array(mask.shape[1], dtype = int).tofile(file)
-  np.array(dx, dtype = float).tofile(file)
+  np.array(M.shape[0], dtype = int).tofile(file)
+  np.array(M.shape[1], dtype = int).tofile(file)
+  np.array(DX, dtype = float).tofile(file)
 
   # write data
-  np.array(mask, dtype = float).tofile(file)
+  np.array(M, dtype = float).tofile(file)
 
   # close file
   file.close()
 
 
+
+################################################################################
+# import convolution mask ######################################################
 ################################################################################
 
 def mask_import(filename):
 
-  """
-  filename: file name from which mask will be imported
+  """ Import convolution mask (Gourgue et al., 2020)
 
-  return:
-    mask: numpy array of shape (nx, ny)
-    dx: mask grid size
+  Required parameters:
+  filename (str)
+
+  Returns:
+  NumPy array of size (k,l): Convolution mask, that is, magnitude of the normalized flow velocity around an elementary vegetation patch of the size of one rectangular grid cell (Gourgue et al., 2020)
+  float: grid size of the convolution mask
+
   """
 
   # open file
   file = open(filename, 'r')
 
   # read header
-  nx = np.fromfile(file, dtype = int, count = 1)[0]
-  ny = np.fromfile(file, dtype = int, count = 1)[0]
-  dx = np.fromfile(file, dtype = float, count = 1)[0]
+  NX = np.fromfile(file, dtype = int, count = 1)[0]
+  NY = np.fromfile(file, dtype = int, count = 1)[0]
+  DX = np.fromfile(file, dtype = float, count = 1)[0]
 
   # read data
-  mask = np.reshape(np.fromfile(file, dtype = float, count = nx * ny), (nx, ny))
+  M = np.reshape(np.fromfile(file, dtype = float, count = NX * NY), (NX, NY))
 
   # close file
   file.close()
 
   # return
-  return [mask, dx]
+  return M, DX
+
 
 
 ################################################################################
+# export vegetation distribution ###############################################
+################################################################################
 
-def veg_export(filename, veg, x0, y0, dx):
+def veg_export(filename, V, X0, Y0, DX):
 
-  """
-  filename: file name in which mask will be exported
-  veg: numpy array of shape (nx, ny)
-  x0, y0: center coordinates of the lower left cell
-  dx: mask grid size
+  """ Export vegetation distribution
+
+  Required parameters:
+  filename (str)
+  V (NumPy array of size (m,n)): Vegetation distribution (equal 1 on vegetated cells, 0 otherwise)
+  X0, Y0 (float): center coordinates of the lower left vegetation grid cell
+  DX (float): grid size of the vegetation grid
+
   """
 
   # open file
   file = open(filename, 'w')
 
   # write header
-  np.array(x0, dtype = float).tofile(file)
-  np.array(y0, dtype = float).tofile(file)
-  np.array(veg.shape[0], dtype = int).tofile(file)
-  np.array(veg.shape[1], dtype = int).tofile(file)
-  np.array(dx, dtype = float).tofile(file)
+  np.array(X0, dtype = float).tofile(file)
+  np.array(Y0, dtype = float).tofile(file)
+  np.array(V.shape[0], dtype = int).tofile(file)
+  np.array(V.shape[1], dtype = int).tofile(file)
+  np.array(DX, dtype = float).tofile(file)
 
   # write data
-  np.array(veg, dtype = int).tofile(file)
+  np.array(V, dtype = int).tofile(file)
 
   # close file
   file.close()
 
 
+
+################################################################################
+# import vegetation distribution ###############################################
 ################################################################################
 
 def veg_import(filename):
 
-  """
-  filename: file name from which mask will be imported
+  """ Import vegetation distribution
 
-  return:
-    veg: numpy array of shape (nx, ny)
-    x0, y0: center coordinates of the lower left cell
-    dx: mask grid size
+  Required parameters:
+  filename (str)
+
+  Returns:
+  V (NumPy array of size (m,n)): Vegetation distribution (equal 1 on vegetated cells, 0 otherwise)
+  X0, Y0 (float): center coordinates of the lower left vegetation grid cell
+  DX (float): grid size of the vegetation grid
+
   """
 
   # open file
   file = open(filename, 'r')
 
   # read header
-  x0 = np.fromfile(file, dtype = float, count = 1)[0]
-  y0 = np.fromfile(file, dtype = float, count = 1)[0]
-  nx = np.fromfile(file, dtype = int, count = 1)[0]
-  ny = np.fromfile(file, dtype = int, count = 1)[0]
-  dx = np.fromfile(file, dtype = float, count = 1)[0]
+  X0 = np.fromfile(file, dtype = float, count = 1)[0]
+  Y0 = np.fromfile(file, dtype = float, count = 1)[0]
+  NX = np.fromfile(file, dtype = int, count = 1)[0]
+  NY = np.fromfile(file, dtype = int, count = 1)[0]
+  DX = np.fromfile(file, dtype = float, count = 1)[0]
 
   # read data
-  veg = np.reshape(np.fromfile(file, dtype = int, count = nx * ny), (nx, ny))
+  V = np.reshape(np.fromfile(file, dtype = int, count = NX * NY), (NX, NY))
 
   # close file
   file.close()
 
   # return
-  return [veg, x0, y0, dx]
+  return V, X0, Y0, DX
 
 
+
+################################################################################
+# compute voronoi clustering ###################################################
 ################################################################################
 
 def voronoi(x, y, tri, X, Y):
 
+  """ Compute the Voronoi clustering between the coarse-resolution unstructured triangular grid and the fine-resolution vegetation structured rectangular grid
+
+  Required parameters:
+  x, y (NumPy arrays of size (npoin)): Coordinates of the triangular grid
+  tri (NumPy array of size (npoin, 3)): Connectivity table of the triangular grid
+  X, Y (NumPy array of size (m) and (n)): coordinates of the rectangular grid
+
+  Returns:
+  Numpy array of shape (m,n): Voronoi matrix giving index of closest triangular grid node (-1 if outside the triangular grid)
+
   """
-  compute the voronoi array from an unstructured triangular grid and a structured squared grid
-
-  triangular grid defined by:
-    x, y: arrays of shape (npoin) giving node coordinates
-    tri: array of shape (nelem, 3) giving node connectivity table
-
-  structured grid defined by:
-    X: array of size (nx) giving center cell coordinates in the x direction
-    Y: array of size (ny) giving center cell coordinates in the y direction
-
-  return:
-    vor: array of shape (nx, ny) giving index of closest triangular grid node (-1 if outside triangular grid)
-  """
-
 
   # initialize voronoi array
   vor = np.zeros((len(X), len(Y)), dtype = int) - 1
