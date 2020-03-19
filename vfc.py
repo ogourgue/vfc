@@ -28,15 +28,15 @@ def convolution_conceptual(X, Y, V, M, beta = .5):
   """ Calculate the magnitude of the normalized flow velocity U/U0 resulting from the vegetation distribution V and the convolution mask M (Gourgue et al., 2020, Equation 10)
 
   Required parameters:
-  X, Y (NumPy array of size (m) and (n)): coordinates of the rectangular grid
-  V (NumPy array of size (m,n)): Vegetation distribution (equal 1 on vegetated cells, 0 otherwise)
-  M (NumPy array of size (k,l)): Convolution mask, that is, magnitude of the normalized flow velocity around an elementary vegetation patch of the size of one rectangular grid cell (Gourgue et al., 2020)
+  X, Y (NumPy array of shape (m) and (n)): coordinates of the rectangular grid
+  V (NumPy array of shape (m, n)): Vegetation distribution (equal 1 on vegetated cells, 0 otherwise)
+  M (NumPy array of shape (k, l)): Convolution mask, that is, magnitude of the normalized flow velocity around an elementary vegetation patch of the size of one rectangular grid cell (Gourgue et al., 2020)
 
   Optional parameter:
   beta (float, default = 0.5): Convolution parameter ranging from 0 to 1 (high values accentuate the impact of the convolution mask) (Gourgue et al., 2020, Equation 11)
 
   Returns:
-  Numpy array of size (m,n): Magnitude of the normalized flow velocity around the vegetation
+  Numpy array of shape (m, n): Magnitude of the normalized flow velocity around the vegetation
 
   """
 
@@ -61,16 +61,16 @@ def convolution_step_1(X, Y, V, M, beta = .5, N = 8):
   """ Calculate the normalized convoluted velocity matrix in N directions (Gourgue et al., 2020, Equation 12)
 
   Required parameters:
-  X, Y (NumPy array of size (m) and (n)): coordinates of the rectangular grid
-  V (NumPy array of size (m,n)): Vegetation distribution (equal 1 on vegetated cells, 0 otherwise)
-  M (NumPy array of size (k,l)): Convolution mask, that is, magnitude of the normalized flow velocity around an elementary vegetation patch of the size of one rectangular grid cell (Gourgue et al., 2020)
+  X, Y (NumPy array of shape (m) and (n)): coordinates of the rectangular grid
+  V (NumPy array of shape (m, n)): Vegetation distribution (equal 1 on vegetated cells, 0 otherwise)
+  M (NumPy array of shape (k, l)): Convolution mask, that is, magnitude of the normalized flow velocity around an elementary vegetation patch of the size of one rectangular grid cell (Gourgue et al., 2020)
 
   Optional parameters:
   beta (float, default = 0.5): Convolution parameter ranging from 0 to 1 (high values accentuate the impact of the convolution mask) (Gourgue et al., 2020, Equation 11)
   N (int, default = 8): Number of convolution directions
 
   Returns:
-  Numpy array of size (N,m,n): Normalized convoluted velocity matrix in N directions
+  Numpy array of shape (N, m, n): Normalized convoluted velocity matrix in N directions
 
   """
 
@@ -106,20 +106,20 @@ def convolution_step_2(x, y, tri, u, v, X, Y, V, M, beta = .5, N = 8):
   """ Calculate the normalized aggregated velocity matrix (Gourgue et al., 2020, Equation 13)
 
   Required parameters:
-  x, y (NumPy arrays of size (npoin)): Coordinates of the triangular grid
-  tri (NumPy array of size (npoin, 3)): Connectivity table of the triangular grid
-  u, v (NumPy arrays of size (npoin)): Velocity components on the coarse-resolution triangular grid
-  X, Y (NumPy array of size (m) and (n)): coordinates of the rectangular grid
-  V (NumPy array of size (m,n)): Vegetation distribution (equal 1 on vegetated cells, 0 otherwise)
-  M (NumPy array of size (k,l)): Convolution mask, that is, magnitude of the normalized flow velocity around an elementary vegetation patch of the size of one rectangular grid cell (Gourgue et al., 2020)
+  x, y (NumPy arrays of shape (npoin)): Coordinates of the triangular grid
+  tri (NumPy array of shape (npoin, 3)): Connectivity table of the triangular grid
+  u, v (NumPy arrays of shape (npoin)): Velocity components on the coarse-resolution triangular grid
+  X, Y (NumPy array of shape (m) and (n)): coordinates of the rectangular grid
+  V (NumPy array of shape (m, n)): Vegetation distribution (equal 1 on vegetated cells, 0 otherwise)
+  M (NumPy array of shape (k, l)): Convolution mask, that is, magnitude of the normalized flow velocity around an elementary vegetation patch of the size of one rectangular grid cell (Gourgue et al., 2020)
 
   Optional parameters:
   beta (float, default = 0.5): Convolution parameter ranging from 0 to 1 (high values accentuate the impact of the convolution mask) (Gourgue et al., 2020, Equation 11)
   N (int, default = 8): Number of convolution directions
 
   Returns:
-  Numpy array of size (m,n): Normalized aggregated velocity matrix
-  NumPy array of size (m,n): Voronoi matrix
+  Numpy array of shape (m, n): Normalized aggregated velocity matrix
+  NumPy array of shape (m, n): Voronoi matrix
 
   """
 
@@ -161,20 +161,20 @@ def convolution_step_3(x, y, tri, u, v, X, Y, V, M, beta = .5, N = 8):
   """ Calculate the normalized conservative velocity matrix (Gourgue et al., 2020, Equation 14)
 
   Required parameters:
-  x, y (NumPy arrays of size (npoin)): Coordinates of the triangular grid
-  tri (NumPy array of size (npoin, 3)): Connectivity table of the triangular grid
-  u, v (NumPy arrays of size (npoin)): Velocity components on the coarse-resolution triangular grid
-  X, Y (NumPy array of size (m) and (n)): coordinates of the rectangular grid
-  V (NumPy array of size (m,n)): Vegetation distribution (equal 1 on vegetated cells, 0 otherwise)
-  M (NumPy array of size (k,l)): Convolution mask, that is, magnitude of the normalized flow velocity around an elementary vegetation patch of the size of one rectangular grid cell (Gourgue et al., 2020)
+  x, y (NumPy arrays of shape (npoin)): Coordinates of the triangular grid
+  tri (NumPy array of shape (npoin, 3)): Connectivity table of the triangular grid
+  u, v (NumPy arrays of shape (npoin)): Velocity components on the coarse-resolution triangular grid
+  X, Y (NumPy array of shape (m) and (n)): coordinates of the rectangular grid
+  V (NumPy array of shape (m, n)): Vegetation distribution (equal 1 on vegetated cells, 0 otherwise)
+  M (NumPy array of shape (k, l)): Convolution mask, that is, magnitude of the normalized flow velocity around an elementary vegetation patch of the size of one rectangular grid cell (Gourgue et al., 2020)
 
   Optional parameters:
   beta (float, default = 0.5): Convolution parameter ranging from 0 to 1 (high values accentuate the impact of the convolution mask) (Gourgue et al., 2020, Equation 11)
   N (int, default = 8): Number of convolution directions
 
   Returns:
-  Numpy array of size (m,n): Normalized conservative velocity matrix
-  NumPy array of size (m,n): Voronoi matrix
+  Numpy array of shape (m, n): Normalized conservative velocity matrix
+  NumPy array of shape (m, n): Voronoi matrix
 
   """
 
@@ -200,20 +200,20 @@ def convolution(x, y, tri, u, v, X, Y, V, M, beta = .5, N = 8):
   """ Calculate the spatially-refined velocity matrix (Gourgue et al., 2020, Equation 15)
 
   Required parameters:
-  x, y (NumPy arrays of size (npoin)): Coordinates of the triangular grid
-  tri (NumPy array of size (npoin, 3)): Connectivity table of the triangular grid
-  u, v (NumPy arrays of size (npoin)): Velocity components on the coarse-resolution triangular grid
-  X, Y (NumPy array of size (m) and (n)): Coordinates of the rectangular grid
-  V (NumPy array of size (m,n)): Vegetation distribution (equal 1 on vegetated cells, 0 otherwise)
-  M (NumPy array of size (k,l)): Convolution mask, that is, magnitude of the normalized flow velocity around an elementary vegetation patch of the size of one rectangular grid cell (Gourgue et al., 2020)
+  x, y (NumPy arrays of shape (npoin)): Coordinates of the triangular grid
+  tri (NumPy array of shape (npoin, 3)): Connectivity table of the triangular grid
+  u, v (NumPy arrays of shape (npoin)): Velocity components on the coarse-resolution triangular grid
+  X, Y (NumPy array of shape (m) and (n)): Coordinates of the rectangular grid
+  V (NumPy array of shape (m, n)): Vegetation distribution (equal 1 on vegetated cells, 0 otherwise)
+  M (NumPy array of shape (k, l)): Convolution mask, that is, magnitude of the normalized flow velocity around an elementary vegetation patch of the size of one rectangular grid cell (Gourgue et al., 2020)
 
   Optional parameters:
   beta (float, default = 0.5): Convolution parameter ranging from 0 to 1 (high values accentuate the impact of the convolution mask) (Gourgue et al., 2020, Equation 11)
   N (int, default = 8): Number of convolution directions
 
   Returns:
-  Numpy array of size (m,n): Spatially-refined velocity matrix
-  NumPy array of size (m,n): Voronoi matrix
+  Numpy array of shape (m, n): Spatially-refined velocity matrix
+  NumPy array of shape (m, n): Voronoi matrix
 
   """
 
@@ -239,7 +239,7 @@ def mask_export(filename, M, DX):
 
   Required parameters:
   filename (str)
-  M (NumPy array of size (k,l)): Convolution mask, that is, magnitude of the normalized flow velocity around an elementary vegetation patch of the size of one rectangular grid cell (Gourgue et al., 2020)
+  M (NumPy array of shape (k, l)): Convolution mask, that is, magnitude of the normalized flow velocity around an elementary vegetation patch of the size of one rectangular grid cell (Gourgue et al., 2020)
   DX (float): grid size of the convolution mask
 
   """
@@ -272,7 +272,7 @@ def mask_import(filename):
   filename (str)
 
   Returns:
-  NumPy array of size (k,l): Convolution mask, that is, magnitude of the normalized flow velocity around an elementary vegetation patch of the size of one rectangular grid cell (Gourgue et al., 2020)
+  NumPy array of shape (k, l): Convolution mask, that is, magnitude of the normalized flow velocity around an elementary vegetation patch of the size of one rectangular grid cell (Gourgue et al., 2020)
   float: grid size of the convolution mask
 
   """
@@ -306,7 +306,7 @@ def veg_export(filename, V, X0, Y0, DX):
 
   Required parameters:
   filename (str)
-  V (NumPy array of size (m,n)): Vegetation distribution (equal 1 on vegetated cells, 0 otherwise)
+  V (NumPy array of shape (m, n)): Vegetation distribution (equal 1 on vegetated cells, 0 otherwise)
   X0, Y0 (float): center coordinates of the lower left vegetation grid cell
   DX (float): grid size of the vegetation grid
 
@@ -342,7 +342,7 @@ def veg_import(filename):
   filename (str)
 
   Returns:
-  V (NumPy array of size (m,n)): Vegetation distribution (equal 1 on vegetated cells, 0 otherwise)
+  V (NumPy array of shape (m, n)): Vegetation distribution (equal 1 on vegetated cells, 0 otherwise)
   X0, Y0 (float): center coordinates of the lower left vegetation grid cell
   DX (float): grid size of the vegetation grid
 
@@ -378,12 +378,12 @@ def voronoi(x, y, tri, X, Y):
   """ Compute the Voronoi clustering between the coarse-resolution unstructured triangular grid and the fine-resolution vegetation structured rectangular grid
 
   Required parameters:
-  x, y (NumPy arrays of size (npoin)): Coordinates of the triangular grid
-  tri (NumPy array of size (npoin, 3)): Connectivity table of the triangular grid
-  X, Y (NumPy array of size (m) and (n)): coordinates of the rectangular grid
+  x, y (NumPy arrays of shape (npoin)): Coordinates of the triangular grid
+  tri (NumPy array of shape (npoin, 3)): Connectivity table of the triangular grid
+  X, Y (NumPy array of shape (m) and (n)): coordinates of the rectangular grid
 
   Returns:
-  Numpy array of shape (m,n): Voronoi matrix giving index of closest triangular grid node (-1 if outside the triangular grid)
+  Numpy array of shape (m, n): Voronoi matrix giving index of closest triangular grid node (-1 if outside the triangular grid)
 
   """
 
