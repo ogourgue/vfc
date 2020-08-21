@@ -134,6 +134,7 @@ def convolution_step_2(x, y, tri, u, v, X, Y, V, M, beta = .5, N = 8):
 
   # coarse-resolution flow directions and corresponding convolution bins
   theta = np.degrees(np.arctan2(v, u))
+  theta[theta < 0] += 360
   bin = np.zeros(theta.shape, dtype = 'int')
   for i in range(N):
     bin[theta > THETA[i] - dtheta / 2] = i
